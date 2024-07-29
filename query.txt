@@ -1,0 +1,64 @@
+INSERT INTO [dbo].[Ingredients] ([Name])
+VALUES 
+    ('Farina'), 
+    ('Zucchero'), 
+    ('Uova'), 
+    ('Burro'), 
+    ('Lievito'),
+    ('Vaniglia'),
+    ('Mandorle'),
+    ('Miele'),
+    ('Cacao'),
+    ('Canditi');
+INSERT INTO [dbo].[Products] ([Name], [Price], [Photo], [DeliveryTimeInMinutes])
+VALUES 
+    ('Muffin', 2.50, 'path_to_muffin_photo.jpg', 20),
+    ('Sfogliatella', 3.00, 'path_to_sfogliatella_photo.jpg', 20),
+    ('Ciambella', 2.00, 'path_to_ciambella_photo.jpg', 15),
+    ('Cornetto', 1.50, 'path_to_cornetto_photo.jpg', 15),
+    ('Panettone', 20.00, 'path_to_panettone_photo.jpg', 40);
+-- Ingredienti per Muffin
+INSERT INTO [dbo].[IngredientProduct] ([IngredientsId], [ProductsId])
+VALUES 
+    (1, 1), -- Farina
+    (2, 1), -- Zucchero
+    (3, 1), -- Uova
+    (4, 1), -- Burro
+    (6, 1); -- Vaniglia
+
+-- Ingredienti per Sfogliatella
+INSERT INTO [dbo].[IngredientProduct] ([IngredientsId], [ProductsId])
+VALUES 
+    (1, 2), -- Farina
+    (2, 2), -- Zucchero
+    (3, 2), -- Uova
+    (4, 2), -- Burro
+    (7, 2); -- Mandorle
+
+-- Ingredienti per Ciambella
+INSERT INTO [dbo].[IngredientProduct] ([IngredientsId], [ProductsId])
+VALUES 
+    (1, 3), -- Farina
+    (2, 3), -- Zucchero
+    (3, 3), -- Uova
+    (4, 3), -- Burro
+    (9, 3); -- Cacao
+
+-- Ingredienti per Cornetto
+INSERT INTO [dbo].[IngredientProduct] ([IngredientsId], [ProductsId])
+VALUES 
+    (1, 4), -- Farina
+    (2, 4), -- Zucchero
+    (3, 4), -- Uova
+    (4, 4), -- Burro
+    (5, 4); -- Lievito
+
+-- Ingredienti per Panettone
+INSERT INTO [dbo].[IngredientProduct] ([IngredientsId], [ProductsId])
+VALUES 
+    (1, 5), -- Farina
+    (2, 5), -- Zucchero
+    (3, 5), -- Uova
+    (4, 5), -- Burro
+    (5, 5), -- Lievito
+    (10, 5); -- Canditi

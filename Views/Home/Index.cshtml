@@ -1,0 +1,15 @@
+﻿@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Panificio "In Forno"</h1>
+    <a asp-action="Create" class="btn btn-primary">Aggiungi un prodotto</a>
+    <ul>
+        @foreach(var product in Model)
+        {
+            <li>@product.Name, @product.Price €</li>
+        }
+    </ul>
+</div>
