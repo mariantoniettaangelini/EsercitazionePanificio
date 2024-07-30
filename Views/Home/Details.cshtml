@@ -1,0 +1,26 @@
+﻿@model Esercitazione.Models.Product
+
+@{
+    ViewData["Title"] = "Dettagli del Prodotto";
+}
+<div class="container mt-4">
+    <div class="card card-center">
+        <div class="card-body">
+            <h3 class="card-title">@Model.Name</h3>
+            <p class="card-text"><strong>Prezzo:</strong> @Model.Price.ToString("C")</p>
+            <p class="card-text"><strong>Tempo di consegna:</strong> @Model.DeliveryTimeInMinutes minuti</p>
+            <h4>Ingredienti</h4>
+            <ul>
+                @foreach (var ingredient in Model.Ingredients)
+                {
+                    <li>@ingredient.Name</li>
+                }
+            </ul>
+        </div>
+        <img src="@Model.Photo" alt="Foto di @Model.Name" class="card-img-bottom" />
+        <div class="card-footer bg-white text-center">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Modifica</a>
+            <a asp-action="Index" class="btn btn-secondary">Torna alla lista</a>
+        </div>
+    </div>
+</div>

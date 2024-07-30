@@ -1,4 +1,5 @@
 using Esercitazione.Context;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,14 @@ builder.Services.AddControllersWithViews();
 var conn = builder.Configuration.GetConnectionString("Db")!;
 builder.Services.AddDbContext<DataContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("Db")));
+
+// AUTENTICAZIONE
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(opt => {
+        opt.LoginPath = "/Account/Login";
+    })
+    ;
 
 var app = builder.Build();
 
