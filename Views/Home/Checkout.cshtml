@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Conferma Ordine";
+    int totalDeliveryTime = ViewBag.TotalDeliveryTime;
+    string userName = ViewBag.CustomerName;
+}
+
+<h2>Grazie per il tuo ordine, @userName!</h2>
+<p>Il tuo ordine è in arrivo in @totalDeliveryTime minuti.</p>
+<p>Siamo lieti di servirti. Il tuo ordine verrà consegnato entro @totalDeliveryTime minuti.</p>
+
+<a asp-action="Index" class="btn btn-primary">Torna alla home</a>

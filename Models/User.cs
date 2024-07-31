@@ -18,5 +18,7 @@ namespace Esercitazione.Models
         [StringLength(20)]
         public required string Password { get; set; }
         public List<Role> Roles { get; set; } = [];
+        public List<Order> Orders { get; set; } = [];
+
     }
 }

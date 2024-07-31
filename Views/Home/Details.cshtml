@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Dettagli del Prodotto";
+    var isAdmin = User.IsInRole("Admin");
 }
 <div class="container mt-4">
     <div class="card card-center">
@@ -19,7 +20,10 @@
         </div>
         <img src="@Model.Photo" alt="Foto di @Model.Name" class="card-img-bottom" />
         <div class="card-footer bg-white text-center">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Modifica</a>
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Modifica</a>
+            }
             <a asp-action="Index" class="btn btn-secondary">Torna alla lista</a>
         </div>
     </div>

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Esercitazione.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -23,28 +23,33 @@ namespace Esercitazione.Controllers
             _dataContext = dataContext;
         }
 
+        // LOGIN
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View();
         }
+
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                User user = _dataContext.Users
+                var user = _dataContext.Users
                     .Include(u => u.Roles)
-                    .FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);  
+                    .FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
 
                 if (user != null)
                 {
                     var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.Name),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Roles.FirstOrDefault()?.Name ?? "Customer")  
-                };
+            {
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Roles.FirstOrDefault()?.Name ?? "Customer"),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()) 
+            };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var authProperties = new AuthenticationProperties();
@@ -54,26 +59,37 @@ namespace Esercitazione.Controllers
                         new ClaimsPrincipal(claimsIdentity),
                         authProperties);
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index"); 
                 }
 
-                ModelState.AddModelError(string.Empty, "Login fallito come te");
+                ModelState.AddModelError(string.Empty, "Login fallito");
             }
+
             return View(model);
         }
 
-        [AllowAnonymous]
+        // LOGOUT 
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+
+        [Authorize(Roles = "Admin, Customer")]
         public IActionResult Index()
         {
             return View(_dataContext.Products);
         }
 
         // CREAZIONE
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View(); 
         }
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Product product)
         {
@@ -83,7 +99,7 @@ namespace Esercitazione.Controllers
         }
 
         // PAGINA DETTAGLIO
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin, Customer")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -104,6 +120,7 @@ namespace Esercitazione.Controllers
         }
 
         // MODIFICA PRODOTTO
+        [Authorize(Roles = "Admin")]
         public IActionResult Edit(int id)
         {
             var product = _dataContext.Products
@@ -115,6 +132,7 @@ namespace Esercitazione.Controllers
             return View(product);
         }
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Product product, int[] Ingredients)
         {
@@ -132,26 +150,35 @@ namespace Esercitazione.Controllers
             return RedirectToAction("Index");
         }
 
+        [Authorize(Roles = "Admin")]
         private void UpdatedProduct(Product product, int[] Ingredients)
         {
-            var existingIngredient = product.Ingredients.Select(i => i.Id).ToList();
+            var currentIngredients = product.Ingredients.Select(i => i.Id).ToList();
 
-            var newIngredient = Ingredients.Except(existingIngredient).ToList();
-            if (newIngredient.Any())
+            var ingredientToRemove = currentIngredients.Except(Ingredients).ToList();
+            foreach(var ingredientId in ingredientToRemove)
             {
-                var newIngredients = _dataContext.Ingredients
-                    .Where(ingredient => newIngredient.Contains(ingredient.Id))
-                    .ToList();
-
-                foreach (var ingredient in newIngredients)
+                var ingredient = _dataContext.Ingredients.Find(ingredientId);
+                if(ingredient != null)
                 {
-                    product.Ingredients.Add(ingredient);                   
+                    product.Ingredients.Remove(ingredient);
+                }
+            }
+
+            var newIngredient = Ingredients.Except(currentIngredients).ToList();
+            foreach(var ingredientId in newIngredient)
+            {
+                var ingredient = _dataContext.Ingredients.Find(ingredientId);
+                if(ingredient != null)
+                {
+                    product.Ingredients.Add(ingredient);
                 }
             }
             _dataContext.Update(product);
         }
 
         // CANCELLAZIONE
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Product model)
         {
             var product = await _dataContext.Products.SingleAsync(p => p.Id == model.Id);
@@ -159,6 +186,84 @@ namespace Esercitazione.Controllers
             await _dataContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        // CUSTOMER - AGGIUNGI AL CARRELLO
+        [Authorize(Roles = "Customer, Admin")]
+        public async Task<IActionResult> Cart()
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var cartItem = await _dataContext.Orders
+                .Include(o => o.Product)
+                .Where(o => o.UserId == userId)
+                .ToListAsync();
+
+            return View(cartItem);
+        }
+        [Authorize(Roles = "Customer, Admin")]
+        public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
+        {
+            var product = await _dataContext.Products.FindAsync(productId);
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var user = await _dataContext.Users.FindAsync(userId);
+
+            var existingOrder = await _dataContext.Orders
+                .FirstOrDefaultAsync(o => o.ProductId == productId && o.UserId == userId);
+
+            if (existingOrder != null)
+            {
+                existingOrder.Quantity += quantity;  
+            }
+            else
+            {
+                var order = new Order
+                {
+                    ProductId = productId,
+                    Quantity = quantity,
+                    UserId = userId,
+                    User = user
+                };
+                _dataContext.Orders.Add(order);
+            }
+
+            await _dataContext.SaveChangesAsync();
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        // CUSTOMER - ELIMINA DAL CARRELLO
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RemoveFromCart(int id)
+        {
+            var order = _dataContext.Orders.FirstOrDefault(o => o.OrderId == id);
+            if (order != null)
+            {
+                _dataContext.Orders.Remove(order);
+                _dataContext.SaveChanges();
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        // CUSTOMER - CHECKOUT
+        public IActionResult Checkout()
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            var cartItems = _dataContext.Orders
+                .Include(o=>o.Product)
+                .Where(o=>o.UserId == userId)
+                .ToList();
+
+            int totalDeliveryTime = cartItems.Sum(item => item.Product.DeliveryTimeInMinutes * item.Quantity);
+            string customerName = User.FindFirstValue(ClaimTypes.Name);
+
+            ViewBag.TotalDeliveryTime = totalDeliveryTime;
+            ViewBag.CustomerName = customerName;    
+
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

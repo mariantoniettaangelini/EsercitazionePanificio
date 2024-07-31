@@ -15,10 +15,9 @@ builder.Services.AddDbContext<DataContext>(opt =>
 // AUTENTICAZIONE
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(opt => {
-        opt.LoginPath = "/Account/Login";
-    })
-    ;
+    .AddCookie(options => {
+        options.LoginPath = "/Home/Login"; 
+    });
 
 var app = builder.Build();
 
@@ -39,6 +38,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Login}/{id?}");
 
 app.Run();
