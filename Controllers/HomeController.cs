@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Esercitazione.Migrations;
 
 namespace Esercitazione.Controllers
 {
@@ -82,22 +83,56 @@ namespace Esercitazione.Controllers
             return View(_dataContext.Products);
         }
 
+        //// CREAZIONE
+        //[Authorize(Roles = "Admin")]
+        //public IActionResult Create()
+        //{
+        //    return View(); 
+        //}
+        //[HttpPost]
+        //[Authorize(Roles = "Admin")]
+        //[ValidateAntiForgeryToken]
+        //public IActionResult Create(Product product)
+        //{
+        //    _dataContext.Products.Add(product);
+        //    _dataContext.SaveChanges();
+        //    return RedirectToAction("Index");
+        //}
+
         // CREAZIONE
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles ="Admin")]
         public IActionResult Create()
         {
-            return View(); 
+            ViewBag.Ingredients = new SelectList(_dataContext.Ingredients, "Id", "Name");
+            return View();
         }
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Product product)
+        public IActionResult Create(Product product, int[] Ingredients)
         {
-            _dataContext.Products.Add(product);
-            _dataContext.SaveChanges();
-            return RedirectToAction("Index");
-        }
+            if(ModelState.IsValid)
+            {
+                if(Ingredients != null && Ingredients.Length > 0)
+                {
+                product.Ingredients = new List<Ingredient>();
+                foreach(var ingredientId in Ingredients)
+                    {
+                        var ingredient = _dataContext.Ingredients.Find(ingredientId);
+                        if(ingredient != null)
+                        {
+                            product.Ingredients.Add(ingredient);
+                        }
+                    }
 
+                }
+                _dataContext.Products.Add(product);
+                _dataContext.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            ViewBag.Ingredients = new SelectList(_dataContext.Ingredients, "Id", "Name");
+            return View(product);
+        }
         // PAGINA DETTAGLIO
         [Authorize(Roles = "Admin, Customer")]
         public async Task<IActionResult> Details(int? id)
@@ -200,7 +235,7 @@ namespace Esercitazione.Controllers
             return View(cartItem);
         }
         [Authorize(Roles = "Customer, Admin")]
-        public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
+        public async Task<IActionResult> AddToCart(int productId, int quantity = 1, string customerNotes = "")
         {
             var product = await _dataContext.Products.FindAsync(productId);
             int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -211,7 +246,8 @@ namespace Esercitazione.Controllers
 
             if (existingOrder != null)
             {
-                existingOrder.Quantity += quantity;  
+                existingOrder.Quantity += quantity;
+                existingOrder.CustomerNotes = customerNotes;
             }
             else
             {
@@ -220,7 +256,8 @@ namespace Esercitazione.Controllers
                     ProductId = productId,
                     Quantity = quantity,
                     UserId = userId,
-                    User = user
+                    User = user,
+                    CustomerNotes = customerNotes
                 };
                 _dataContext.Orders.Add(order);
             }
@@ -242,27 +279,51 @@ namespace Esercitazione.Controllers
                 _dataContext.SaveChanges();
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction("Cart");
+        }
+
+        // CUSTOMER - NOTE DEL CLIENTE
+        public async Task<IActionResult> UpdateOrderNotes(int orderId, string notes)
+        {
+            var order = await _dataContext.Orders.FindAsync(orderId);
+            if (order != null)
+            {
+                order.CustomerNotes = notes;
+                await _dataContext.SaveChangesAsync();
+                return RedirectToAction("Cart");
+            }
+            return View("Error");
         }
 
         // CUSTOMER - CHECKOUT
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout()
         {
             int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-            var cartItems = _dataContext.Orders
-                .Include(o=>o.Product)
-                .Where(o=>o.UserId == userId)
-                .ToList();
+            var cartItems = await _dataContext.Orders
+                .Include(o => o.Product)
+                .Where(o => o.UserId == userId)
+                .ToListAsync();
 
-            int totalDeliveryTime = cartItems.Sum(item => item.Product.DeliveryTimeInMinutes * item.Quantity);
-            string customerName = User.FindFirstValue(ClaimTypes.Name);
 
-            ViewBag.TotalDeliveryTime = totalDeliveryTime;
-            ViewBag.CustomerName = customerName;    
+            if (cartItems.Any())
+            {
+                int totalDeliveryTime = cartItems.Sum(item => item.Product.DeliveryTimeInMinutes * item.Quantity);
+                string customerName = User.FindFirstValue(ClaimTypes.Name);
+                _dataContext.Orders.RemoveRange(cartItems);
+                await _dataContext.SaveChangesAsync();
 
-            return View();
+                ViewBag.TotalDeliveryTime = totalDeliveryTime;
+                ViewBag.CustomerName = customerName;
+
+                return View("Checkout");
+            }
+            else
+            {
+                return RedirectToAction("Cart");
+            }
         }
+
 
         public IActionResult Privacy()
         {

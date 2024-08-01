@@ -4,8 +4,9 @@
     ViewData["Title"] = "Dettagli del Prodotto";
     var isAdmin = User.IsInRole("Admin");
 }
+
 <div class="container mt-4">
-    <div class="card card-center">
+    <div class="card border-0 shadow" style="background-color: #fff3cd;">
         <div class="card-body">
             <h3 class="card-title">@Model.Name</h3>
             <p class="card-text"><strong>Prezzo:</strong> @Model.Price.ToString("C")</p>
@@ -22,7 +23,7 @@
         <div class="card-footer bg-white text-center">
             @if (isAdmin)
             {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Modifica</a>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Modifica</a> <!-- Bottone giallo -->
             }
             <a asp-action="Index" class="btn btn-secondary">Torna alla lista</a>
         </div>
