@@ -1,0 +1,46 @@
+﻿@model IEnumerable<Esercitazione.Models.Order>
+
+@{
+    ViewData["Title"] = "Report Orders";
+    var orderTotal = ViewBag.orderTotal as Dictionary<int, decimal>;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Resoconto Ordini</h1>
+</div>
+
+<div class="container mt-3">
+    <form asp-action="UpdateOrder" asp-controller="Home" method="post">
+        <table class="table table-bordered table-hover shadow-sm" style="background-color: #fff3cd;">
+            <thead class="thead-light">
+                <tr>
+                    <th>Prodotto</th>
+                    <th>Quantità</th>
+                    <th>Prezzo Totale</th>
+                    <th>Cliente</th>
+                    <th>Note</th>
+                    <th>Stato dell'ordine</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td>@order.Product.Name</td>
+                        <td>@order.Quantity</td>
+                        <td>@orderTotal[order.OrderId] €</td>
+                        <td>@order.User.Name</td>
+                        <td>@order.CustomerNotes</td>
+                        <td class="text-center">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="completed[@order.OrderId]" name="completed[@order.OrderId]" value="true" @(order.Completed ? "checked" : "") />
+                                <label class="form-check-label" for="completed[@order.OrderId]"></label>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+    <h2>Prezzo Totale degli Ordini Completati: @ViewBag.TotalPrice €</h2>
+</div>

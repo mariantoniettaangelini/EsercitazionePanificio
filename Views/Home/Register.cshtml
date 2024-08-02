@@ -1,13 +1,22 @@
-﻿@model Esercitazione.Models.LoginViewModel
+﻿@model Esercitazione.Models.User
+
+@{
+    ViewData["Title"] = "Register";
+}
 
 <div class="container vh-100">
     <div class="row justify-content-center align-items-center h-100">
         <div class="col-md-6">
             <div class="card border-0 shadow" style="background-color: #fff3cd;">
                 <div class="card-body">
-                    <h3>Login</h3>
-                    <form asp-action="Login" method="post">
+                    <h2>Iscriviti al nostro sito!</h2>
+                    <form asp-action="Register" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="Name">Nome</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
                         <div class="form-group">
                             <label asp-for="Email">Email</label>
                             <input asp-for="Email" class="form-control" />
@@ -18,8 +27,12 @@
                             <input asp-for="Password" type="password" class="form-control" />
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
-                        <br />
-                        <button type="submit" class="btn btn-warning mt-2">Login</button> 
+                        <div class="form-group">
+                            <label for="confirmPassword">Conferma la Password</label>
+                            <input type="password" name="confirmPassword" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-warning mt-2">Registrami</button>
                     </form>
                 </div>
             </div>

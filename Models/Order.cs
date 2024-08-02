@@ -9,5 +9,7 @@
         public int UserId { get; set; }
         public User User { get; set; }
         public string CustomerNotes { get; set; } = "";
+        public bool Completed { get; set; }
+        public bool IsInCart { get; set; } = true;
     }
 }

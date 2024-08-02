@@ -13,6 +13,7 @@ namespace Esercitazione.Models
         [StringLength(50)]
         public string Name { get; set; }
         [Range(0,100)]
+        [Precision(10,2)]
         public decimal Price { get; set; }
         [Required, StringLength(128)]
         public required string Photo { get; set; }
